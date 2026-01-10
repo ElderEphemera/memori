@@ -1,0 +1,62 @@
+body {
+  background-color: #DDD;
+  overflow: hidden;
+}
+
+#table {
+  margin: auto;
+  border-spacing: 20px;
+}
+
+td {
+  perspective: 500px;
+}
+
+td > div {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 140px;
+  height: 200px;
+  background-color: #822;
+  border-radius: 10px;
+}
+
+.card:hover:not(.flipped) {
+  animation: hover-lift 0.1s both ease;
+}
+
+@keyframes hover-lift {
+  50% {
+    transform: rotateX(10deg) translateZ(20px);
+  }
+  100% {
+    transform: rotateX(0deg) translateZ(40px);
+  }
+}
+
+.flipped {
+  background-color: #EEE;
+  box-shadow: 0 0 5px 2px #822;
+}
+
+.matched {
+  box-shadow: 0 0 5px 2px gold;
+  transition: box-shadow 0.1s;
+}
+
+.card:not(.flipped) * {
+  display: none;
+}
+
+.composite {
+  margin: auto;
+  border-spacing: 0px;
+}
+
+.comp-ico {
+  width: 40px;
+  height: 60px;
+}
