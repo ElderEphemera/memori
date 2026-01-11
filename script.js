@@ -205,12 +205,12 @@ const levels = [
   () => genText("Nice Job!", "Think Carefully"),
 
   // Crossing the first threshold
-  () => mapSpread(levelA.reverse(), ({ name, contents }) => {
+  () => mapSpread(levelA.toReversed(), ({ name, contents }) => {
     contents = contents.cloneNode(true);
     contents.style.transform = "rotateX(180deg)";
     return { name, contents };
   }),
-  () => mapSpread(levelA.map(row => row.reverse()), ({ name, contents}) => {
+  () => mapSpread(levelA.map(row => row.toReversed()), ({ name, contents}) => {
     contents = contents.cloneNode(true);
     contents.style.transform = "rotateY(180deg)";
     return { name, contents };
