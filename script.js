@@ -303,7 +303,7 @@ function count(node, counter, from, to) {
     [{ [counter]: from }, { [counter]: to }],
     {
       duration: Math.sqrt(Math.abs(to-from))*150,
-      delay: 1000,
+      delay: 500,
       fill: "both"
     }
   ).finished;
