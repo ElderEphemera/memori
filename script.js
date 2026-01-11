@@ -77,8 +77,9 @@ function mapSpread(spread, func) {
   return spread.map(row => row.map(func));
 }
 
-function names(spread) {
-  return mapSpread(spread, card => card.name);
+function signature(spread) {
+  const names = spread.flat().map(card => card.name);
+  return spread.map(row => row.map(card => names.indexOf(card.name)).join("")).join();
 }
 
 function insertRow(spread, rowIndex, newRow) {
@@ -140,13 +141,13 @@ function initializeLevels() {
 
   do {
     levelA = genNormal(mainFruit, 3, 3);
-  } while (names(levelA) == names(levelA).reverse())
+  } while (signature(levelA) == signature(levelA.toReversed()))
   do {
     levelB = genNormal(mainFruit, 3, 3);
-  } while (names(levelA) == names(levelB))
+  } while (signature(levelA) == signature(levelB))
   do {
     levelC = genNormal(mainFruit, 3, 3);
-  } while ([names(levelA), names(levelB)].includes(names(levelC)))
+  } while ([signature(levelA), signature(levelB)].includes(signature(levelC)))
 
   extraRow = firstRun ? 1 : rand(3);
   extraCol = firstRun ? 2 : rand(4);
