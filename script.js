@@ -294,7 +294,15 @@ async function unflip() {
 function checkFinished() {
   if (document.querySelectorAll(".card:not(.matched):not(.special)").length == 0) {
     playing = false;
-    setTimeout(() => changeCards(false).then(nextLevel), 1000);
+    unflippedSpecials =
+      Array.from(document.querySelectorAll(".special:not(.flipped)"));
+    setTimeout(async () => {
+      await unflippedSpecials.reduce(
+        (promise, card) => promise.then(() => flip(card)),
+        Promise.resolve(0));
+      await changeCards(false);
+      nextLevel();
+    }, 1000);
   }
 }
 
