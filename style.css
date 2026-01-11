@@ -1,11 +1,81 @@
 body {
   background-color: #DDD;
+  font-family: sans-serif;
   overflow: hidden;
+  user-select: none;
+}
+
+#score {
+  position: absolute;
+  right: 10px;
+}
+
+#score p {
+  text-align: right;
+  font-size: 15pt;
+  font-weight: bold;
+  margin: 0;
+}
+
+@property --score {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+#counter {
+  counter-reset: score var(--score);
+}
+
+#counter::after {
+  content: counter(score);
+}
+
+@property --addend {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+#addend {
+  counter-reset: addend var(--addend);
+  visibility: hidden;
+}
+
+#addend.positive::after {
+  content: "+" counter(addend);
+  color: #292;
+}
+
+#addend.negative::after {
+  content: counter(addend);
+  color: #C22;
+}
+
+.header {
+  margin: auto;
+  flex-direction: column;
+  align-items: center;
+}
+
+td:has(.header) {
+  column-span: all;
+}
+
+h1 {
+  font-size: 30pt;
+}
+
+h2 {
+  font-size: 18pt;
+  text-align: center;
 }
 
 #table {
   margin: auto;
-  border-spacing: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 td {
@@ -20,8 +90,15 @@ td > div {
 .card {
   width: 140px;
   height: 200px;
+  margin: 10px;
   background-color: #822;
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.card > img {
+  scale: 2;
 }
 
 .card:hover:not(.flipped) {

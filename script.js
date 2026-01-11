@@ -1,24 +1,29 @@
 const tableNode = document.getElementById("table");
 
-const pear = document.createElement("img");
-pear.src = "images/pear.svg";
+function makeImageCard(name) {
+  let img = document.createElement("img");
+  img.src = `images/${name}.svg`;
+  return { name, contents: img };
+}
 
 const fruit = [
   "apple",
   "banana",
   "pear",
-  ].map(name => {
-    let img = document.createElement("img");
-    img.src = `images/${name}.svg`;
-    return { name, contents: img };
-  })
+  "orange",
+  "grapes",
+].map(makeImageCard);
 
-function chunk(n, arr) {
-  const chunked = [];
-  for(; arr.length > 0; arr = arr.slice(n)) {
-    chunked.push(arr.slice(0, n));
-  }
-  return chunked;
+const skull = makeImageCard("skull");
+const bonus = makeImageCard("bonus");
+
+const specials = {
+  skull: -50,
+  bonus: 100,
+};
+
+function rand(n) {
+  return Math.floor(Math.random()*n);
 }
 
 function shuffle(arr) {
@@ -28,15 +33,32 @@ function shuffle(arr) {
     .map(tagged => tagged.el);
 }
 
+function chunk(n, arr) {
+  const chunked = [];
+  for(; arr.length > 0; arr = arr.slice(n)) {
+    chunked.push(arr.slice(0, n));
+  }
+  return chunked;
+}
+
+function twice(elem) {
+  return [0,0].map(() => elem());
+}
+
+function thrice(elem) {
+  return [0,0,0].map(() => elem());
+}
+
 function makeTable(parent, spread, cls) {
   for (const row of spread) {
     const rowNode = document.createElement("tr");
-    for (const { name, contents } of row) {
+    for (const card of row) {
       const placeNode = document.createElement("td");
       const cardNode = document.createElement("div");
-      cardNode.classList.add(cls);
-      cardNode.setAttribute("card-name", name);
-      cardNode.appendChild(contents.cloneNode(true));
+      cardNode.classList.add(card.classOverride || cls);
+      if (specials[card.name]) cardNode.classList.add("special");
+      cardNode.setAttribute("card-name", card.name);
+      cardNode.appendChild(card.contents.cloneNode(true));
       placeNode.appendChild(cardNode);
       rowNode.appendChild(placeNode);
     }
@@ -51,26 +73,96 @@ function composite(name, spread) {
   return { name, contents: compTable };
 }
 
-function names(spread) {
-  return spread.map(row => row.map(card => card.name));
+function mapSpread(spread, func) {
+  return spread.map(row => row.map(func));
 }
 
-function genNormal(n, w) {
-  let chosen = shuffle(fruit).slice(0, 3);
+function names(spread) {
+  return mapSpread(spread, card => card.name);
+}
+
+function insertRow(spread, rowIndex, newRow) {
+  return spread.toSpliced(rowIndex, 0, newRow);
+}
+
+function insertCol(spread, colIndex, newCol) {
+  return spread.map((row, i) => row.toSpliced(colIndex, 0, newCol[i]));
+}
+
+function genNormal(choices, n, w) {
+  let chosen = shuffle(choices).slice(0, 3);
   return chunk(3, shuffle(chosen.concat(chosen)));
 }
 
+function genText(headerText, text) {
+  const header = document.createElement("h1");
+  header.textContent = headerText
+  const card = document.createElement("h2");
+  card.textContent = text;
+  return [
+    [{ name: "header", contents: header, classOverride: "header" }],
+    twice(() => ({ name: text, contents: card })),
+  ]
+}
+
+function large(basis) {
+  return insertCol(insertRow(basis, extraRow, largeExtraRow), extraCol, largeExtraCol);
+}
+
+function minefield(mine, fruit) {
+  const field = thrice(() => thrice(() => mine));
+  field[minefieldLoc1.y][minefieldLoc1.x] = fruit;
+  field[minefieldLoc2.y][minefieldLoc2.x] = fruit;
+  return field;
+}
+
+function small(fruit) {
+  return chunk(2, shuffle([skull, bonus, ...twice(() => fruit)]));
+}
+
 let currentLevel = 0;
+
+let mainFruit;
+let extraFruit1, extraFruit2;
 let levelA, levelB, levelC;
+let firstRun = true;
+let extraRow, extraCol, specialIx;
+let minefieldLoc1 = {}, minefieldLoc2 = {};
+let largeExtraRow, largeExtraCol;
 
 function initializeLevels() {
-  levelA = genNormal(3, 3);
+  score = 0;
+  count(document.getElementById("counter"), "--score", 0, 0);
+
+  mainFruit = shuffle(fruit);
+  extraFruit1 = mainFruit.pop();
+  extraFruit2 = mainFruit.pop();
+
   do {
-    levelB = genNormal(3, 3);
+    levelA = genNormal(mainFruit, 3, 3);
+  } while (names(levelA) == names(levelA).reverse())
+  do {
+    levelB = genNormal(mainFruit, 3, 3);
   } while (names(levelA) == names(levelB))
   do {
-    levelC = genNormal(3, 3);
+    levelC = genNormal(mainFruit, 3, 3);
   } while ([names(levelA), names(levelB)].includes(names(levelC)))
+
+  extraRow = firstRun ? 1 : rand(3);
+  extraCol = firstRun ? 2 : rand(4);
+  specialIx = firstRun ? 1 : rand(3);
+  firstRun = false;
+
+  minefieldLoc1.x = rand(3);
+  minefieldLoc1.y = rand(3);
+  minefieldLoc2.x = rand(3);
+  do {
+    minefieldLoc2.y = rand(3);
+  } while (minefieldLoc1.x == minefieldLoc2.x && minefieldLoc1.y == minefieldLoc2.y)
+
+  let additional = shuffle([...twice(() => extraFruit1), ...twice(() => extraFruit2), skull, bonus]);
+  largeExtraRow = additional.slice(0,3);
+  largeExtraCol = additional.slice(3,6);
 }
 
 let clickHook = undefined;
@@ -87,40 +179,93 @@ function clickFirst(name) {
 }
 
 const levels = [
+  // Ordinary world
+  () => {
+    initializeLevels();
+    return levelA;
+  },
   () => levelA,
   () => levelA,
-  () => levelA,
+
+  // Call to adventure
   () => {
     clickFirst("levelA");
     let types =
       Object.entries({ levelA, levelB, levelC }).map(e => composite(...e));
     return chunk(3, shuffle(types.concat(types)));
   },
+
+  // Refusal of the call
   () => levelB,
   () => levelC,
+  () => levelA,
+
+  // Meeting with the mentor
+  () => genText("Nice Job!", "Think Carefully"),
+
+  // Crossing the first threshold
+  () => mapSpread(levelA.reverse(), ({ name, contents }) => {
+    contents = contents.cloneNode(true);
+    contents.style.transform = "rotateX(180deg)";
+    return { name, contents };
+  }),
+  () => mapSpread(levelA.map(row => row.reverse()), ({ name, contents}) => {
+    contents = contents.cloneNode(true);
+    contents.style.transform = "rotateY(180deg)";
+    return { name, contents };
+  }),
+
+  // Tests, allies, and enemies
+  () => insertCol(levelA, extraCol, twice(() => extraFruit1)),
+  () => insertRow(levelA, extraRow, insertRow(twice(() => extraFruit1), specialIx, bonus)),
+  () => insertRow(levelA, extraRow, insertRow(twice(() => extraFruit1), specialIx, skull)),
+
+  // The innermost cave
+  () => large(levelA),
+  () => large(levelB),
+  () => large(levelC),
+
+  // The ordeal
+  () => minefield(skull, extraFruit1),
+  () => genText("Sorry", "Trust Me"),
+
+  // Reward
+  () => minefield(bonus, extraFruit1),
+
+  // The road back
+  () => levelB,
+  () => levelC,
+
+  // The resurrection
+  () => small(extraFruit2),
+
+  // Return with the elixir
+  () => levelA,
+  () => genText("You Win!", "Play Again"),
 ];
 
-function nextLevel() {
-  return levels[currentLevel++ % levels.length]();
-}
-
 let selected = null;
-let playing = true;
+let playing = false;
 
-function deal() {
+async function nextLevel() {
   tableNode.textContent = "";
-  makeTable(tableNode, nextLevel(), "card");
-  changeCards(true);
+  makeTable(tableNode, levels[currentLevel++ % levels.length](), "card");
+  await changeCards(true);
+  playing = true;
 }
 
-function changeCards(enter) {
+function slide(nodes, enter, delay) {
   const keyframes = enter
     ? [{ translate: `0 1000px` }, {}]
     : [{}, { translate: `0 -1000px` }];
   const timing = { duration: 300, easing: "ease", fill: "both" };
-  return Promise.all(Array.from(document.querySelectorAll(".card")).map(
-    (card, i) => card.animate(keyframes, { delay: i*100, ...timing }).finished
+  return Promise.all(Array.from(nodes).map(
+    (node, i) => node.animate(keyframes, { delay: i*delay, ...timing }).finished
   ));
+}
+
+function changeCards(enter) {
+  return slide(document.querySelectorAll(".card, .header"), enter, 100);
 }
 
 function rotate(card, from, to, direction) {
@@ -147,9 +292,47 @@ async function unflip() {
 }
 
 function checkFinished() {
-  if (document.querySelectorAll(".card:not(.matched)").length == 0) {
-    setTimeout(() => changeCards(false).then(deal), 1000);
+  if (document.querySelectorAll(".card:not(.matched):not(.special)").length == 0) {
+    playing = false;
+    setTimeout(() => changeCards(false).then(nextLevel), 1000);
   }
+}
+
+function count(node, counter, from, to) {
+  return node.animate(
+    [{ [counter]: from }, { [counter]: to }],
+    {
+      duration: Math.sqrt(Math.abs(to-from))*150,
+      delay: 1000,
+      fill: "both"
+    }
+  ).finished;
+}
+
+let score = 0;
+let streak = 0;
+let adding = Promise.resolve();
+
+function addPoints(n) {
+  adding = adding.then(() => {
+    const counter = document.getElementById("counter");
+    const addend = document.getElementById("addend");
+    if (n >= 0) {
+      addend.classList.add("positive");
+      addend.classList.remove("negative");
+    } else {
+      addend.classList.add("negative");
+      addend.classList.remove("positive");
+    }
+    addend.style.visibility = "visible";
+    return Promise.all([
+      count(counter, "--score", score, score+n),
+      count(addend, "--addend", n, 0),
+    ]).then(() => {
+      score += n;
+      addend.style.visibility = "hidden";
+    });
+  });
 }
 
 tableNode.onclick = event => {
@@ -161,22 +344,33 @@ tableNode.onclick = event => {
 
   if (clickHook) target = clickHook(target) || target;
 
-  if (selected == null) {
+  flip(target);
+  const cardName = target.getAttribute("card-name");
+
+  if (specials[cardName]) {
+    addPoints(specials[cardName]);
+    target.classList.add("matched");
+    if (specials[cardName] < 0) streak = 0;
+  } else if (selected == null) {
     unflip();
     selected = target;
   } else {
-    if (target.getAttribute("card-name") == selected.getAttribute("card-name")) {
+    if (cardName == selected.getAttribute("card-name")) {
       target.classList.add("matched");
       selected.classList.add("matched");
+      if (cardName != "Play Again") {
+        addPoints(10+5*streak);
+        streak++;
+      }
       checkFinished();
     } else {
+      addPoints(-5);
+      streak = 0;
       setTimeout(unflip, 1000);
       playing = false;
     }
     selected = null;
   }
-  flip(target);
 };
 
-initializeLevels();
-deal();
+nextLevel();

@@ -203,10 +203,10 @@
     <ellipse
        style="fill:#9e7223;fill-opacity:1;stroke-width:0.367185;stroke-linecap:square;stroke-dasharray:none"
        id="path9"
-       cx="14.122187"
-       cy="28.703695"
-       rx="0.36177802"
-       ry="0.51344454"
+       cx="14.222187"
+       cy="28.513695"
+       rx="0.18177802"
+       ry="0.26344454"
        transform="matrix(0.9403201,-0.34029122,0.27620114,0.96109985,0,0)" />
     <path
        style="fill:#ffea00;fill-opacity:1;stroke-width:0.362748"
