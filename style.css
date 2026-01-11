@@ -72,25 +72,34 @@ h2 {
   text-align: center;
 }
 
-#table {
+table {
   margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 650px;
+}
+
+tr {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 td {
   perspective: 500px;
+  min-width: 0px;
+  display: flex;
 }
 
 td > div {
-  display: flex;
   justify-content: center;
 }
 
 .card {
   width: 140px;
-  height: 200px;
+  height: auto;
+  aspect-ratio: 0.7;
   margin: 10px;
   background-color: #822;
   border-radius: 10px;
@@ -98,8 +107,25 @@ td > div {
   align-items: center;
 }
 
-.card > img {
-  scale: 2;
+img {
+  flex-grow: 1;
+  width: 0;
+  scale: 1.3;
+}
+
+.composite {
+  flex-grow: 1;
+  width: 0;
+}
+
+.composite tr {
+  padding: 5px;
+}
+
+.comp-ico {
+  width: 60px;
+  display: flex;
+  align-items: center;
 }
 
 .card:hover:not(.flipped) {
@@ -129,12 +155,11 @@ td > div {
   display: none;
 }
 
-.composite {
-  margin: auto;
-  border-spacing: 0px;
-}
-
-.comp-ico {
-  width: 40px;
-  height: 60px;
+@media (max-width: 780px) {
+  #score {
+    position: initial;
+  }
+  .card {
+    margin: 5px;
+  }
 }
